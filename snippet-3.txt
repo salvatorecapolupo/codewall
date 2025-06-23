@@ -1,0 +1,3 @@
+class Snippet3:
+    def greet(self):
+        return 'Hello snippet 3'
