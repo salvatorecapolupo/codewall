@@ -8,26 +8,36 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
+      background: #f5f5f5;
+      color: #333;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      background: #f5f5f5;
-      color: #333;
     }
     main {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       padding: 2rem;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     .problem-title {
       font-size: 2rem;
       font-weight: bold;
       margin-bottom: 1rem;
       color: #005f73;
+    }
+    .snippet-content {
+      font-family: monospace;
+      background: #e0f7fa;
+      border: 1px solid #005f73;
+      padding: 1rem;
+      max-width: 600px;
+      width: 90%;
+      white-space: pre-wrap;
+      border-radius: 6px;
     }
     footer {
       background: #023047;
@@ -49,8 +59,8 @@
 <body>
 
   <main>
-    <div class="problem-title" id="problemTitle">PROBLEMA 1</div>
-    <!-- Qui potresti mostrare lo snippet o altro contenuto -->
+    <div class="problem-title" id="problemTitle">PROBLEMA</div>
+    <pre class="snippet-content" id="snippetContent">Caricamento snippet...</pre>
   </main>
 
   <footer>
@@ -61,11 +71,31 @@
   </footer>
 
   <script>
-    // Esempio: cambiare il numero del problema dinamicamente
-    // Supponiamo di avere un numero variabile "problemNumber"
-    const problemNumber = 1;  // Puoi cambiare questo numero dinamicamente
-    const problemTitle = document.getElementById('problemTitle');
-    problemTitle.textContent = `PROBLEMA ${problemNumber}`;
+    // Array con i nomi corretti degli snippet (con trattino)
+    const snippets = [
+      'snippet-1.txt', 'snippet-2.txt', 'snippet-3.txt', 'snippet-4.txt', 'snippet-5.txt',
+      'snippet-6.txt', 'snippet-7.txt', 'snippet-8.txt', 'snippet-9.txt', 'snippet-10.txt',
+      'snippet-11.txt', 'snippet-12.txt', 'snippet-13.txt', 'snippet-14.txt', 'snippet-15.txt',
+      'snippet-16.txt', 'snippet-17.txt', 'snippet-18.txt', 'snippet-19.txt', 'snippet-20.txt',
+      'snippet-21.txt', 'snippet-22.txt', 'snippet-23.txt', 'snippet-25.txt', 'snippet-26.txt',
+      'snippet-27.txt', 'snippet-28.txt', 'snippet-29.txt'
+    ];
+
+    function getRandomSnippet() {
+      const idx = Math.floor(Math.random() * snippets.length);
+      return { index: idx + 1, filename: snippets[idx] };
+    }
+
+    function loadSnippet(snippet) {
+      const title = document.getElementById('problemTitle');
+      const content = document.getElementById('snippetContent');
+
+      title.textContent = `PROBLEMA ${snippet.index}`;
+      content.textContent = `Contenuto del file ${snippet.filename}\n\n// Qui ci sarebbe il codice dello snippet...`;
+    }
+
+    const snippet = getRandomSnippet();
+    loadSnippet(snippet);
   </script>
 
 </body>
