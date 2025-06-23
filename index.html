@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Code Wall - Gioco di completamento codice</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0; background: #f4f4f9;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  header {
+    background: #222; color: white; width: 100%; padding: 10px 0; text-align: center;
+    font-size: 1.5rem;
+  }
+  main {
+    max-width: 800px; width: 90%; margin: 20px auto;
+    background: white; padding: 20px; border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .mode-select {
+    margin-bottom: 15px;
+  }
+  .code-area {
+    background: #272822;
+    color: #f8f8f2;
+    padding: 15px;
+    font-family: "Source Code Pro", monospace;
+    font-size: 1rem;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    min-height: 120px;
+  }
+  input.code-input {
+    width: 80px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #000;
+    font-family: monospace;
+    font-size: 1rem;
+    text-align: center;
+  }
+  .draggable-brick {
+    background: #5c9ded;
+    padding: 6px 12px;
+    margin: 5px;
+    border-radius: 4px;
+    cursor: grab;
+    user-select: none;
+    color: white;
+    font-family: monospace;
+    font-weight: bold;
+  }
+  .drop-zone {
+    min-width: 80px;
+    min-height: 28px;
+    display: inline-block;
+    border-bottom: 2px dashed #bbb;
+    margin: 0 4px;
+    vertical-align: bottom;
+  }
+  .drop-zone.over {
+    border-color: #5c9ded;
+  }
+  button {
+    margin-top: 15px;
+    background: #5c9ded;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  #scoreboard {
+    margin-top: 15px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+  }
+
+  @media (max-width: 600px) {
+    .code-area {
+      font-size: 0.9rem;
+    }
+    input.code-input {
+      width: 60px;
+      font-size: 0.9rem;
+    }
+    .draggable-brick {
+      padding: 5px 8px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>Code Wall - Completa il codice</header>
+<main>
+  <div class="mode-select">
+    <label><input type="radio" name="mode" value="text" checked> Completa con input testuale</label> &nbsp;&nbsp;
+    <label><input type="radio" name="mode" value="drag"> Completa trascinando i mattoncini</label>
+  </div>
+
+  <div id="game-area">
+    <pre class="code-area" id="code-display">Caricamento codice...</pre>
+  </div>
+
+  <button id="check-btn" disabled>Controlla risposta</button>
+
+  <div id="scoreboard">Punteggio: 0</div>
+</main>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+(() => {
+  // CONFIG
+  const githubBaseUrl = './'; // cambia se vuoi URL github raw o altro. Qui si assume cartella con txt
+
+  // Lista dei file da cui pescare pezzi di codice - qui nomi fittizi, devi mettere i tuoi file .txt
+  const codeFiles = [
+    'snippet1.txt',
+    'snippet2.txt',
+    'snippet3.txt'
+  ];
+
+  let currentSnippet = '';
+  let currentParts = [];  // array di {text: string, missing: bool, answer?: string}
+  let mode = 'text'; // 'text' o 'drag'
+  let score = 0;
+
+  // Utility: fetch testo file
+  async function fetchCodeFile(filename) {
+    try {
+      const res = await fetch(githubBaseUrl + filename);
+      if (!res.ok) throw new Error('File non trovato');
+      const text = await res.text();
+      return text.trim();
+    } catch(e) {
+      console.error('Errore caricando file:', filename, e);
+      return null;
+    }
+  }
+
+  // Parse snippet: 
+  // La sintassi del file deve avere parti mancanti racchiuse da {{...}}
+  // es: "console.{{log}}('Ciao');"
+  // dove "log" è la risposta corretta
+  // Dividiamo in pezzi: testo fisso e parti mancanti con answer
+  function parseSnippet(snippet) {
+    const regex = /{{(.*?)}}/g;
+    let lastIndex = 0;
+    let parts = [];
+    let match;
+    while ((match = regex.exec(snippet)) !== null) {
+      // testo prima del match
+      if (match.index > lastIndex) {
+        parts.push({text: snippet.substring(lastIndex, match.index), missing:false});
+      }
+      // parte mancante
+      parts.push({text:'', missing:true, answer: match[1].trim()});
+      lastIndex = regex.lastIndex;
+    }
+    // resto testo
+    if (lastIndex < snippet.length) {
+      parts.push({text: snippet.substring(lastIndex), missing:false});
+    }
+    return parts;
+  }
+
+  // Render modalità input testuale
+  function renderTextMode(parts) {
+    let html = '';
+    parts.forEach((p,i) => {
+      if (p.missing) {
+        html += `<input type="text" class="code-input" data-idx="${i}" autocomplete="off" />`;
+      } else {
+        html += $('<div>').text(p.text).html(); // escape HTML
+      }
+    });
+    $('#game-area').html(`<pre class="code-area" id="code-display">${html}</pre>`);
+  }
+
+  // Render modalità drag & drop
+  // Qui mostriamo il codice con drop zone al posto di parti mancanti e sotto mattoncini con risposte mischiate
+  function renderDragMode(parts) {
+    // Costruiamo codice con drop zones inline
+    let html = '';
+    parts.forEach((p,i) => {
+      if (p.missing) {
+        html += `<span class="drop-zone" data-idx="${i}"></span>`;
+      } else {
+        html += $('<div>').text(p.text).html();
+      }
+    });
+    let dropArea = `<pre class="code-area" id="code-display">${html}</pre>`;
+
+    // Mattoncini da trascinare: prendiamo tutte le risposte e mischiamo
+    let answers = parts.filter(p => p.missing).map(p => p.answer);
+    answers = shuffleArray(answers);
+
+    let bricksHtml = '<div id="bricks-container" style="margin-top:10px; display:flex; flex-wrap: wrap;">';
+    answers.forEach((a,i) => {
+      bricksHtml += `<div class="draggable-brick" draggable="true" data-answer="${a}">${a}</div>`;
+    });
+    bricksHtml += '</div>';
+
+    $('#game-area').html(dropArea + bricksHtml);
+
+    // Setup eventi drag&drop
+    setupDragAndDrop();
+  }
+
+  // Shuffle array (Fisher-Yates)
+  function shuffleArray(array) {
+    let a = array.slice();
+    for(let i = a.length -1; i>0; i--) {
+      let j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  // Setup eventi drag and drop
+  function setupDragAndDrop() {
+    const bricks = document.querySelectorAll('.draggable-brick');
+    const drops = document.querySelectorAll('.drop-zone');
+
+    bricks.forEach(brick => {
+      brick.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', brick.dataset.answer);
+        e.dataTransfer.effectAllowed = 'move';
+        // Per evidenziare il brick che si trascina (optional)
+        brick.classList.add('dragging');
+      });
+      brick.addEventListener('dragend', e => {
+        brick.classList.remove('dragging');
+      });
+    });
+
+    drops.forEach(drop => {
+      drop.addEventListener('dragover', e => {
+        e.preventDefault();
+        drop.classList.add('over');
+      });
+      drop.addEventListener('dragleave', e => {
+        drop.classList.remove('over');
+      });
+      drop.addEventListener('drop', e => {
+        e.preventDefault();
+        drop.classList.remove('over');
+        let answer = e.dataTransfer.getData('text/plain');
+        // Inserisco il testo nel drop zone
+        drop.textContent = answer;
+        drop.dataset.filled = 'true';
+
+        // Rimuovo mattoncino trascinato dalla lista (opzionale, altrimenti si può lasciare)
+        let brickToRemove = [...document.querySelectorAll('.draggable-brick')].find(b => b.dataset.answer === answer && !b.classList.contains('dragging'));
+        if (brickToRemove) brickToRemove.remove();
+
+        // Abilito bottone controllo
+        $('#check-btn').prop('disabled', false);
+      });
+    });
+  }
+
+  // Controllo risposta in modalità input testuale
+  function checkTextMode() {
+    let correct = true;
+    $('.code-input').each((i, input) => {
+      let idx = $(input).data('idx');
+      let val = $(input).val().trim();
+      if (val !== currentParts[idx].answer) {
+        correct = false;
+        $(input).css('border-color', 'red');
+      } else {
+        $(input).css('border-color', 'green');
+      }
+    });
+    return correct;
+  }
+
+  // Controllo risposta in modalità drag & drop
+  function checkDragMode() {
+    let correct = true;
+    $('.drop-zone').each((i, drop) => {
+      let idx = parseInt(drop.dataset.idx);
+      let val = drop.textContent.trim();
+      if (val !== currentParts[idx].answer) {
+        correct = false;
+        drop.style.borderColor = 'red';
+      } else {
+        drop.style.borderColor = 'green';
+      }
+    });
+    return correct;
+  }
+
+  // Carica un pezzo di codice random, parsalo e renderizza
+  async function loadRandomSnippet() {
+    $('#check-btn').prop('disabled', true);
+    $('#scoreboard').text(`Punteggio: ${score}`);
+    currentParts = [];
+    currentSnippet = '';
+    $('#game-area').html('<pre class="code-area" id="code-display">Caricamento codice...</pre>');
+
+    let file = codeFiles[Math.floor(Math.random()*codeFiles.length)];
+    let snippet = await fetchCodeFile(file);
+
+    if (!snippet) {
+      $('#game-area').html('<p style="color:red;">Errore nel caricamento del codice.</p>');
+      return;
+    }
+
+    currentSnippet = snippet;
+    currentParts = parseSnippet(snippet);
+
+    if (mode === 'text') {
+      renderTextMode(currentParts);
+      $('#check-btn').prop('disabled', false);
+    } else {
+      renderDragMode(currentParts);
+      // Bottone controlla disabilitato finché non si mettono tutti mattoncini
+      $('#check-btn').prop('disabled', true);
+    }
+  }
+
+  // Passa a snippet successivo se corretto
+  function nextRound() {
+    score++;
+    loadRandomSnippet();
+  }
+
+  // Inizializzazione e eventi
+  $(function(){
+    // Carica snippet iniziale
+    loadRandomSnippet();
+
+    // Cambia modalità
+    $('input[name=mode]').change(function(){
+      mode = this.value;
+      loadRandomSnippet();
+    });
+
+    // Controlla risposta
+    $('#check-btn').click(() => {
+      let correct = false;
+      if (mode === 'text') {
+        correct = checkTextMode();
+      } else {
+        correct = checkDragMode();
+      }
+      if (correct) {
+        alert('Corretto! Passiamo al prossimo pezzo.');
+        nextRound();
+      } else {
+        alert('Qualcosa non va, prova ancora.');
+      }
+    });
+
+    // In modalità testo abilita bottone solo se almeno una input ha valore
+    $('#game-area').on('input', '.code-input', function(){
+      let anyFilled = $('.code-input').filter((i,e) => $(e).val().trim().length > 0).length > 0;
+      $('#check-btn').prop('disabled', !anyFilled);
+    });
+  });
+})();
+</script>
+</body>
+</html>
