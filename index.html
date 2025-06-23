@@ -1,102 +1,151 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CodeWall</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f5f5f5;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    main {
-      flex: 1;
-      padding: 2rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    .problem-title {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-      color: #005f73;
-    }
-    .snippet-content {
-      font-family: monospace;
-      background: #e0f7fa;
-      border: 1px solid #005f73;
-      padding: 1rem;
-      max-width: 600px;
-      width: 90%;
-      white-space: pre-wrap;
-      border-radius: 6px;
-    }
-    footer {
-      background: #023047;
-      color: #fff;
-      text-align: center;
-      padding: 1rem 0;
-      font-size: 1rem;
-    }
-    footer a {
-      color: #ffb703;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CodeWall - Gioco a livelli</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    background: #f5f5f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  main {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .problem-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #005f73;
+    margin-bottom: 1rem;
+  }
+  .snippet-content {
+    font-family: monospace;
+    background: #e0f7fa;
+    border: 1px solid #005f73;
+    border-radius: 6px;
+    padding: 1rem;
+    max-width: 600px;
+    width: 90%;
+    white-space: pre-wrap;
+    min-height: 150px;
+    margin-bottom: 1.5rem;
+  }
+  .buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  button {
+    background: #023047;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:disabled {
+    background: #999;
+    cursor: not-allowed;
+  }
+  button:hover:enabled {
+    background: #ffb703;
+    color: #023047;
+  }
+  footer {
+    background: #023047;
+    color: #fff;
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 1rem;
+  }
+  footer a {
+    color: #ffb703;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
+</style>
 </head>
 <body>
 
-  <main>
-    <div class="problem-title" id="problemTitle">PROBLEMA</div>
-    <pre class="snippet-content" id="snippetContent">Caricamento snippet...</pre>
-  </main>
+<main>
+  <div class="problem-title" id="problemTitle">PROBLEMA 1</div>
+  <pre class="snippet-content" id="snippetContent">// Caricamento...</pre>
+  <div class="buttons">
+    <button id="solveBtn">Ho risolto</button>
+    <button id="nextBtn" disabled>Successivo</button>
+  </div>
+</main>
 
-  <footer>
-    CodeWall è un prototipo ideato e programmato da 
-    <a href="https://salvatorecapolupo.github.io/about-me/" target="_blank" rel="noopener noreferrer">
-      Salvatore Capolupo
-    </a> :-)
-  </footer>
+<footer>
+  CodeWall è un prototipo ideato e programmato da 
+  <a href="https://salvatorecapolupo.github.io/about-me/" target="_blank" rel="noopener noreferrer">
+    Salvatore Capolupo
+  </a> :-)
+</footer>
 
-  <script>
-    // Array con i nomi corretti degli snippet (con trattino)
-    const snippets = [
-      'snippet-1.txt', 'snippet-2.txt', 'snippet-3.txt', 'snippet-4.txt', 'snippet-5.txt',
-      'snippet-6.txt', 'snippet-7.txt', 'snippet-8.txt', 'snippet-9.txt', 'snippet-10.txt',
-      'snippet-11.txt', 'snippet-12.txt', 'snippet-13.txt', 'snippet-14.txt', 'snippet-15.txt',
-      'snippet-16.txt', 'snippet-17.txt', 'snippet-18.txt', 'snippet-19.txt', 'snippet-20.txt',
-      'snippet-21.txt', 'snippet-22.txt', 'snippet-23.txt', 'snippet-25.txt', 'snippet-26.txt',
-      'snippet-27.txt', 'snippet-28.txt', 'snippet-29.txt'
-    ];
+<script>
+  const snippets = [
+    "snippet-1.txt", "snippet-2.txt", "snippet-3.txt", "snippet-4.txt"
+    // Puoi aggiungere altri snippet man mano
+  ];
 
-    function getRandomSnippet() {
-      const idx = Math.floor(Math.random() * snippets.length);
-      return { index: idx + 1, filename: snippets[idx] };
+  const demoContents = {
+    "snippet-1.txt": "def hello():\n    print('Hello from snippet 1')",
+    "snippet-2.txt": "for i in range(5):\n    print(f'Snippet 2 loop iteration {i}')",
+    "snippet-3.txt": "class Snippet3:\n    def greet(self):\n        return 'Hello snippet 3'",
+    "snippet-4.txt": "if __name__ == '__main__':\n    print('Running snippet 4')"
+  };
+
+  let currentIndex = 0;
+
+  const titleElem = document.getElementById("problemTitle");
+  const contentElem = document.getElementById("snippetContent");
+  const solveBtn = document.getElementById("solveBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  function loadSnippet(index) {
+    const filename = snippets[index];
+    titleElem.textContent = `PROBLEMA ${index + 1}`;
+    contentElem.textContent = demoContents[filename] || `Contenuto demo non disponibile per ${filename}`;
+    nextBtn.disabled = true;   // Disabilita "Successivo" finché non risolvo
+    solveBtn.disabled = false; // Abilita "Ho risolto"
+  }
+
+  solveBtn.addEventListener("click", () => {
+    nextBtn.disabled = false;  // Abilita "Successivo"
+    solveBtn.disabled = true;  // Disabilita "Ho risolto" finché non cambio problema
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (currentIndex < snippets.length - 1) {
+      currentIndex++;
+      loadSnippet(currentIndex);
+    } else {
+      alert("Hai completato tutti i problemi! Complimenti 🎉");
+      // Opzionale: resetta al primo livello
+      currentIndex = 0;
+      loadSnippet(currentIndex);
     }
+  });
 
-    function loadSnippet(snippet) {
-      const title = document.getElementById('problemTitle');
-      const content = document.getElementById('snippetContent');
-
-      title.textContent = `PROBLEMA ${snippet.index}`;
-      content.textContent = `Contenuto del file ${snippet.filename}\n\n// Qui ci sarebbe il codice dello snippet...`;
-    }
-
-    const snippet = getRandomSnippet();
-    loadSnippet(snippet);
-  </script>
+  loadSnippet(currentIndex);
+</script>
 
 </body>
 </html>
