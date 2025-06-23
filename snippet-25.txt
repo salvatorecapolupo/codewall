@@ -1,0 +1,2 @@
+Seleziona tutti gli utenti
+SELECT * FROM {{users}};

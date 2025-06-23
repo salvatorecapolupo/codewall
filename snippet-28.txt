@@ -1,0 +1,2 @@
+Aggiorna l'età aggiungendo 1 all'utente Mario
+UPDATE users SET age = age + {{1}} WHERE name = '{{Mario}}';

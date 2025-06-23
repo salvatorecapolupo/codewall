@@ -1,0 +1,4 @@
+Scambia due variabili a e b
+int temp = a;
+a = {{b}};
+b = {{temp}};

@@ -1,0 +1,2 @@
+Stampa "Benvenuto nel gioco"
+print("Benvenuto nel {{gioco}}")

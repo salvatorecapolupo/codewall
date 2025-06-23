@@ -1,0 +1,3 @@
+Somma i valori in [ebp+8] e [ebp+12] e salva in eax
+mov eax, [{{ebp}}+8]
+add eax, [{{ebp}}+12]

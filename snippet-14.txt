@@ -1,0 +1,2 @@
+Stampa "Ciao Mondo!"
+System.out.println("Ciao {{Mondo}}!");

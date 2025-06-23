@@ -1,0 +1,7 @@
+Definisci una classe Counter con un metodo per incrementare un contatore
+class Counter {
+    int count;
+public:
+    Counter() : count(0) {}
+    void increment() { count = count + {{1}}; }
+};

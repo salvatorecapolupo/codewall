@@ -1,0 +1,6 @@
+Classe Contatore con metodo per incrementare
+class Contatore:
+    def __init__(self):
+        self.count = 0
+    def incrementa(self):
+        self.count = self.count + {{1}}

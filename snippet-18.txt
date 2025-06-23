@@ -1,0 +1,7 @@
+Classe Contatore con metodo incrementa
+public class Contatore {
+    private int count = 0;
+    public void incrementa() {
+        count = count + {{1}};
+    }
+}

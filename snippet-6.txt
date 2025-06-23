@@ -1,0 +1,5 @@
+Esegui un ciclo che decrementa ecx da 3 a 0
+mov ecx, {{3}}
+loop_start:
+dec ecx
+jnz {{loop_start}}

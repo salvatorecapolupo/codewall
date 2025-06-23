@@ -1,0 +1,2 @@
+Seleziona nome e età di utenti maggiori di 18
+SELECT {{name}}, {{age}} FROM users WHERE age > {{18}};

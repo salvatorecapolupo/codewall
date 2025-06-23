@@ -1,0 +1,2 @@
+Sposta il valore 5 nel registro eax
+mov eax, {{5}}

@@ -1,0 +1,6 @@
+Funzione per trovare il massimo tra due numeri
+def massimo(a, b):
+    if a > b:
+        return {{a}}
+    else:
+        return {{b}}

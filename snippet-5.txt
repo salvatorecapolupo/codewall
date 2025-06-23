@@ -1,0 +1,2 @@
+Scambia i valori di eax e ebx
+xchg eax, {{ebx}}
